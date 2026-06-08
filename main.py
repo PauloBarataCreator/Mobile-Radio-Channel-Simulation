@@ -1,80 +1,75 @@
 
 from interface import *
 import time
-
 from pathlib import Path
 import matplotlib.pyplot as plt
-
-# rng = np.random.default_rng(2026)
-
+import os
 
 #Simula
+def transmittion(limiar, resultados):
 
-LIMIAR = 200000
+    Eb_No = 0
+    while Eb_No < 10:
 
-resultados = []
+            i = 0
 
+            binary_code = gera_codigo_binario(limiar)
 
-Eb_No = 0
-while Eb_No < 10:
+            modulated_sgn_tx = modula_sgn(binary_code)
 
-        # Não precisa desse i
-        i = 0
+            # Add AWGN noise
+            sgn_awgn = add_ruido_awgn(modulated_sgn_tx, Eb_No, np.random.default_rng(2026))
 
-        binary_code = gera_codigo_binario(LIMIAR)
+            # Add Rayleigh Fading plus AWGN noise
+            sgn_ray_awgn = add_rayleigh_plus_awgn(modulated_sgn_tx, Eb_No, np.random.default_rng(2026))
 
-        modulated_sgn_tx = modula_sgn(binary_code)
-        
-        # Add AWGN noise
-        sgn_awgn = add_ruido_awgn(modulated_sgn_tx)
+            # Estimation
 
-        # canal_awgn
-        sgn_awgn = canal_awgn(np.array(modulated_sgn_tx), Eb_No, np.random.default_rng(2026)).tolist()
+            ## AWGN
+            estimation_awgn = correlation_estimation(sgn_awgn)
+            i += limiar
+            ## Rayleigh
+            estimation_ray_awgn = correlation_estimation(sgn_ray_awgn)
 
-        # Add Rayleigh Fading plus AWGN noise
-        sgn_ray_awgn = add_rayleigh_plus_awgn(modulated_sgn_tx, Eb_No, np.random.default_rng(2026))
+            # Decision error
 
-        # Estimation
+            # Error AWGN
+            error_awgn = error_decisao(estimation_awgn, binary_code)
 
-        ## AWGN
-        estimation_awgn = correlation_estimation(sgn_awgn)
-        i += LIMIAR
-        ## Rayleigh
-        estimation_ray_awgn = correlation_estimation(sgn_ray_awgn)
+            # Error Rayleigh plus AWGN
+            error_ray_awgn = error_decisao(estimation_ray_awgn, binary_code)
 
-        # Decision error
+            # Perro
 
-        # Error AWGN
-        error_awgn = error_decisao(estimation_awgn, binary_code)
+            # Perro AWGN
+            perro_awgn = perro(error_awgn, binary_code)
 
-        # Error Rayleigh plus AWGN
-        error_ray_awgn = error_decisao(estimation_ray_awgn, binary_code)
+            # Perro Rayleigh plus AWGN
+            perro_ray_awgn = perro(error_ray_awgn, binary_code)
 
-        # Perro
-
-        # Perro AWGN
-        perro_awgn = perro(error_awgn, binary_code)
-
-        # Perro Rayleigh plus AWGN
-        perro_ray_awgn = perro(error_ray_awgn, binary_code)
-
-        # print(perro_ray_awgn)
-        Eb_No+=1
+            # print(perro_ray_awgn)
+            Eb_No+=1
 
 
-        resultados.append(
-            {
-                "Eb_No": float(Eb_No),
-                "bits_simulados": float(i),
-                "BER_AWGN": perro_awgn,
-                "BER_Rayleigh_AWGN": perro_ray_awgn,
-            }
-        )
-        
-        # print(resultados)
-        time.sleep(0.01)
+            resultados.append(
+                {
+                    "Eb_No": float(Eb_No),
+                    "bits_simulados": float(i),
+                    "BER_AWGN": perro_awgn,
+                    "BER_Rayleigh_AWGN": perro_ray_awgn,
+                }
+            )
+            
+            # print(resultados)
+            time.sleep(0.01)
 
+    
+    # Salvando o resultado gráfico em imagem
+    cwd = os.getcwd()
+    path_store = Path(cwd+"\\output.png")
+    gera_grafico(resultados,path_store)
 
+    return resultados
 
 def gera_grafico(resultados, caminho_png):
     # Gera um grafico BER x Eb/No
@@ -100,11 +95,9 @@ def gera_grafico(resultados, caminho_png):
     caminho_png.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(caminho_png, dpi=160)
     plt.close()
-    # return True
 
-
-def imprimir_resultados(resultados):
-    """Mostra os resultados no terminal em formato de tabela simples."""
+def mostrar_resultados(resultados):
+   # Apenas mostrar os resultados obtidos
     print("Eb/No(dB) | BER AWGN | BER Rayleigh plus AWGN")
     print("-" * 86)
 
@@ -115,13 +108,16 @@ def imprimir_resultados(resultados):
             f"{linha['BER_Rayleigh_AWGN']:.6e}       | "
         )
 
+# TEMP
+# resultados = []
+# resultados = transmittion(200000)
 
-import os
-cwd = os.getcwd()
-path_store = Path(cwd+"\\output.png")
-print(cwd+"\\output.png")
+# import os
+# cwd = os.getcwd()
+# path_store = Path(cwd+"\\output.png")
+# print(cwd+"\\output.png")
 
 
-gera_grafico(resultados,path_store)
+# gera_grafico(resultados,path_store)
 
-imprimir_resultados(resultados)
+# mostrar_resultados(resultados)

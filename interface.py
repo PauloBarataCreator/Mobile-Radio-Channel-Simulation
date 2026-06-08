@@ -1,8 +1,8 @@
 from binary_number import rand_key
-from noise_awgn import noise
 from numpy import sqrt
 import random
-
+import math 
+import numpy as np
 
 def gera_codigo_binario(limiar):
     # Cria código binário - Limiar
@@ -22,17 +22,32 @@ def modula_sgn(binary_input_em_lista):
             modulated_sgn.append(-1)
     return modulated_sgn
 
-def add_ruido_awgn(modulated_sgn):
-    # Adicionando Ruído AWGN
-    sgn_awgn = []
-    for i,j in zip(modulated_sgn, noise()):
-        sgn_awgn.append(i + j)
+def noise_distribution(Eb_No, tamanho, rng: np.random.Generator):
+    # De acordo com Eb/No gera um ruído AWGN
 
+    # Lineariza o Eb/No
+    Eb_No_linear = 10.0 ** (Eb_No / 10.0)
+
+    # Energia para q bit de BPSK, inverso de Eb_No.
+    n0 = 1.0 / Eb_No_linear
+
+    # Extrai a variância do ruído a partir de n0/2.
+    variance = math.sqrt(n0 / 2.0)
+
+    # Ruido branco AWGN com distruição gaussiana.
+    noise = rng.normal(loc=0.0, scale=variance, size=tamanho)
+
+    return noise
+
+def add_ruido_awgn(modulated_sgn, Eb_No, rng):
+    # Adiciona ruído branco AWGN ao sinal recebido.
+    noise = noise_distribution(Eb_No, len(modulated_sgn), rng)
+    sgn_awgn = modulated_sgn + noise
     return sgn_awgn
 
 def add_rayleigh_plus_awgn(modulated_sgn, eb_no, rng):
 
-    sgn_awgn = gaussiana_awgn(eb_no, len(modulated_sgn), rng)
+    sgn_awgn = noise_distribution(eb_no, len(modulated_sgn), rng)
 
     # Rayleigh fading plus Noise
     sgn_ray_awgn=[]
@@ -72,26 +87,3 @@ def perro(error, binary_input_em_lista):
 
 
 
-## Fixing adding
-import math 
-import numpy as np
-
-def gaussiana_awgn(eb_no_db: float, quantidade: int, rng: np.random.Generator) -> np.ndarray:
-    """Gera ruido Gaussiano branco aditivo para um dado Eb/No em dB."""
-    eb_no_linear = 10.0 ** (eb_no_db / 10.0)
-
-    # Para BPSK com energia de bit Eb = 1, temos N0 = 1 / (Eb/No).
-    n0 = 1.0 / eb_no_linear
-
-    # Em banda base real, a variancia do ruido e N0/2.
-    sigma = math.sqrt(n0 / 2.0)
-
-    # O ruido AWGN e modelado por uma variavel aleatoria normal de media zero.
-    ruido = rng.normal(loc=0.0, scale=sigma, size=quantidade)
-    return ruido
-
-def canal_awgn(tx: np.ndarray, eb_no_db: float, rng: np.random.Generator) -> np.ndarray:
-    """Aplica o canal AWGN padrao: sinal recebido = sinal transmitido + ruido."""
-    ruido = gaussiana_awgn(eb_no_db, tx.size, rng)
-    rx = tx + ruido
-    return rx

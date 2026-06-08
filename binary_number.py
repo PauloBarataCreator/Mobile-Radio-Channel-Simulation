@@ -1,5 +1,4 @@
 # Python program for random binary string generation
-
 import random
 
 # Function to create the random binary string

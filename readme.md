@@ -1,5 +1,6 @@
 ## Purpose
 Create a simulation of bits transmition and adding AWGN noise and Rayleigh fading.
 
-## Main file of the project
-main.py
+## How 
+my_project_v001.py
+
