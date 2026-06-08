@@ -6,7 +6,7 @@ import numpy as np
 
 def gera_codigo_binario(limiar):
     # Cria código binário - Limiar
-    N = limiar # number of bits or symbols 10^6
+    N = limiar 
     binary_input = rand_key(N)
     binary_input_em_lista = [int(i) for i in list(binary_input)]
 
