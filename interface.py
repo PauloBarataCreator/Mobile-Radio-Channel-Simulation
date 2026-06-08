@@ -22,7 +22,7 @@ def modula_sgn(binary_input_em_lista):
             modulated_sgn.append(-1)
     return modulated_sgn
 
-def noise_distribution(Eb_No, tamanho, rng: np.random.Generator):
+def noise_distribution(Eb_No, tamanho, rng):
     # De acordo com Eb/No gera um ruído AWGN
 
     # Lineariza o Eb/No

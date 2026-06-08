@@ -18,10 +18,10 @@ def transmission(limiar, resultados):
             modulated_sgn_tx = modula_sgn(binary_code)
 
             # Add AWGN noise
-            sgn_awgn = add_ruido_awgn(modulated_sgn_tx, Eb_No, np.random.default_rng(2026))
+            sgn_awgn = add_ruido_awgn(modulated_sgn_tx, Eb_No, np.random.default_rng(4144))
 
             # Add Rayleigh Fading plus AWGN noise
-            sgn_ray_awgn = add_rayleigh_plus_awgn(modulated_sgn_tx, Eb_No, np.random.default_rng(2026))
+            sgn_ray_awgn = add_rayleigh_plus_awgn(modulated_sgn_tx, Eb_No, np.random.default_rng(4144))
 
             # Estimation
 
@@ -87,7 +87,7 @@ def gera_grafico(resultados, caminho_png):
 
     plt.grid(True, which="both", linestyle=":")
     plt.xlabel("Eb/No (dB)")
-    plt.ylabel("BER / Perro")
+    plt.ylabel("Bits error rate / (Perro)")
     plt.title("Mobile Radio Channel Simulation")
     plt.legend()
     plt.tight_layout()
