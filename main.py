@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import os
 
 #Simula
-def transmittion(limiar, resultados):
+def transmission(limiar, resultados):
 
     Eb_No = 0
     while Eb_No < 10:
@@ -108,9 +108,9 @@ def mostrar_resultados(resultados):
             f"{linha['BER_Rayleigh_AWGN']:.6e}       | "
         )
 
-# TEMP
+# Para rodar todo projeto por aqui
 # resultados = []
-# resultados = transmittion(200000)
+# resultados = transmission(200000)
 
 # import os
 # cwd = os.getcwd()
