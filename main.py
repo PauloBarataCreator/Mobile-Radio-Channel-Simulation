@@ -1,54 +1,127 @@
-import numpy as np
 
+from interface import *
+import time
+
+from pathlib import Path
 import matplotlib.pyplot as plt
 
-import seaborn as sns
-
-from numpy import random
-
-ak = [1,1,0,1,0]
-t  = np.arange(0,1,0.01)
-
-t_variable = np.arange(0,len(ak),0.01)
-
-fc = 1
-sp = np.cos(2*np.pi*fc*t)
-# estará retornando em uma faixa de 0 até 100, sendo 100 = 1s. Cada bloco de 100 em 100 é um símbolo.
-
-abb = np.array([])
-sm = np.array([])
-
-sm_awgn = np.array([])
+# rng = np.random.default_rng(2026)
 
 
-noise = np.random.normal(0,0.1,100)
+#Simula
+
+LIMIAR = 200000
+
+resultados = []
 
 
-rayleight_desv = random.rayleigh(size=100)
-# y3 = np.convolve(z, x_volts) 
+Eb_No = 0
+while Eb_No < 10:
 
-for k in ak:
-    if k == 1:
-        ele=1
-    else:
-        ele=-1
-    
-    # abb = np.append(abb, ele)
-    abb = np.append(abb, ele*np.ones(len(t)))
-    # np.ones gera um monte de números 1
-    sm = np.append(sm, ele*sp)
-    sm_awgn = np.append(sm_awgn, ele*sp*rayleight_desv + noise)
-    # sm_awgn = np.append(sm_awgn, np.convolve(ele*sp, float(rayleight_desv)))
+        # Não precisa desse i
+        i = 0
 
-fig, ax = plt.subplots(2)
-# ax[0].plot(t_variable,abb)
-ax[0].plot(t_variable,sm)
-ax[1].plot(t_variable,sm_awgn)
+        binary_code = gera_codigo_binario(LIMIAR)
 
-# plt.plot(abb)
-plt.show()
+        modulated_sgn_tx = modula_sgn(binary_code)
+        
+        # Add AWGN noise
+        sgn_awgn = add_ruido_awgn(modulated_sgn_tx)
+
+        # canal_awgn
+        sgn_awgn = canal_awgn(np.array(modulated_sgn_tx), Eb_No, np.random.default_rng(2026)).tolist()
+
+        # Add Rayleigh Fading plus AWGN noise
+        sgn_ray_awgn = add_rayleigh_plus_awgn(modulated_sgn_tx, Eb_No, np.random.default_rng(2026))
+
+        # Estimation
+
+        ## AWGN
+        estimation_awgn = correlation_estimation(sgn_awgn)
+        i += LIMIAR
+        ## Rayleigh
+        estimation_ray_awgn = correlation_estimation(sgn_ray_awgn)
+
+        # Decision error
+
+        # Error AWGN
+        error_awgn = error_decisao(estimation_awgn, binary_code)
+
+        # Error Rayleigh plus AWGN
+        error_ray_awgn = error_decisao(estimation_ray_awgn, binary_code)
+
+        # Perro
+
+        # Perro AWGN
+        perro_awgn = perro(error_awgn, binary_code)
+
+        # Perro Rayleigh plus AWGN
+        perro_ray_awgn = perro(error_ray_awgn, binary_code)
+
+        # print(perro_ray_awgn)
+        Eb_No+=1
 
 
-print(abb)
-# print(sm)
-# print(t)
+        resultados.append(
+            {
+                "Eb_No": float(Eb_No),
+                "bits_simulados": float(i),
+                "BER_AWGN": perro_awgn,
+                "BER_Rayleigh_AWGN": perro_ray_awgn,
+            }
+        )
+        
+        # print(resultados)
+        time.sleep(0.01)
+
+
+
+def gera_grafico(resultados, caminho_png):
+    # Gera um grafico BER x Eb/No
+
+    eb_no = [linha["Eb_No"] for linha in resultados]
+
+    plt.figure(figsize=(9, 6))
+    plt.semilogy(eb_no, [linha["BER_AWGN"] for linha in resultados], "o-", label="AWGN")
+    plt.semilogy(
+        eb_no,
+        [linha["BER_Rayleigh_AWGN"] for linha in resultados],
+        "s-",
+        label="Rayleigh plus AWGN",
+    )
+
+    plt.grid(True, which="both", linestyle=":")
+    plt.xlabel("Eb/No (dB)")
+    plt.ylabel("BER / Perro")
+    plt.title("Mobile Radio Channel Simulation")
+    plt.legend()
+    plt.tight_layout()
+
+    caminho_png.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(caminho_png, dpi=160)
+    plt.close()
+    # return True
+
+
+def imprimir_resultados(resultados):
+    """Mostra os resultados no terminal em formato de tabela simples."""
+    print("Eb/No(dB) | BER AWGN | BER Rayleigh plus AWGN")
+    print("-" * 86)
+
+    for linha in resultados:
+        print(
+            f"{linha['Eb_No']:8.0f} | "
+            f"{linha['BER_AWGN']:.6e} | "
+            f"{linha['BER_Rayleigh_AWGN']:.6e}       | "
+        )
+
+
+import os
+cwd = os.getcwd()
+path_store = Path(cwd+"\\output.png")
+print(cwd+"\\output.png")
+
+
+gera_grafico(resultados,path_store)
+
+imprimir_resultados(resultados)

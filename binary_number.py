@@ -1,12 +1,8 @@
-# Python program for random
-# binary string generation
-
+# Python program for random binary string generation
 
 import random
 
-
-# Function to create the
-# random binary string
+# Function to create the random binary string
 def rand_key(p):
   
     # Variable to store the 
@@ -27,8 +23,3 @@ def rand_key(p):
         key1 += temp
         
     return(key1)
-
-# # Driver Code
-# n = 7
-# str1 = rand_key(n)
-# print("Desired length random binary string is: ", str1)
